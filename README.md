@@ -2,6 +2,8 @@
 
 Sqlcmd – command line tool for Microsoft SQL Server.
 
+[![fabiang/sqlcmd](http://dockeri.co/image/fabiang/sqlcmd)](https://registry.hub.docker.com/u/fabiang/sqlcmdo/)
+
 ## Licence
 
 When using this container you accept the licences from MICROSOFT SOFTWARE LICENSE TERMS
