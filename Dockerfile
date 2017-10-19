@@ -15,8 +15,9 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
     && apt-get update \
     && apt-get install -y mssql-tools unixodbc-dev \
     && ln -sfn /opt/mssql-tools/bin/sqlcmd /usr/bin/sqlcmd \
-    && ln -sfn /opt/mssql-tools/bin/bcp /usr/bin/bcp \
-    && apt-get remove -y curl apt-transport-https \
+    && ln -sfn /opt/mssql-tools/bin/bcp /usr/bin/bcp
+
+RUN apt-get remove -y curl apt-transport-https \
     && apt-get autoremove -y \
     && apt-get clean \
     && apt-get autoclean
