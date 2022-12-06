@@ -5,7 +5,7 @@ ARG MSSQLTOOLS_VERSION=17.4.1.1-1
 ENV PATH=/opt/mssql-tools/bin:$PATH
 
 RUN apt-get update \
-    && apt-get install -y curl apt-transport-https locales gnupg2 \
+    && apt-get install -y curl apt-transport-https locales gnupg2 dos2unix \
     && locale-gen "en_US.UTF-8" \
     && export `grep "VERSION_ID" /etc/os-release | sed -e 's/^VERSION_ID=\"/VERSION_ID=/' -e 's/\"$//'` \
     && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
