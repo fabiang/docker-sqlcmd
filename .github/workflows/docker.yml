@@ -34,6 +34,8 @@ jobs:
       IMAGE_NAME_UBUNTU_MAJOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_major }}-ubuntu${{ matrix.version.ubuntu }}"
       IMAGE_LATEST: "fabiang/sqlcmd:latest"
       IMAGE_LATEST_UBUNTU: "fabiang/sqlcmd:ubuntu-latest"
+      IMAGE_LATEST_UBUNTU_MINOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_minor }}-ubuntu"
+      IMAGE_LATEST_UBUNTU_MAJOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_major }}-ubuntu"
 
     runs-on: ubuntu-latest
 
@@ -65,12 +67,14 @@ jobs:
         run: |
           docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_NAME_MINOR }}'
           docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_NAME_UBUNTU_MINOR }}'
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_LATEST_UBUNTU_MINOR }}'
 
       - name: Tag Major
         if: "${{ matrix.version.sqlcmd_major != '' }}"
         run: |
           docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_NAME_MAJOR }}'
           docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_NAME_UBUNTU_MAJOR }}'
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_LATEST_UBUNTU_MAJOR }}'
 
       - name: Tag Latest
         if: "${{ matrix.version.latest == true }}"
@@ -96,9 +100,11 @@ jobs:
         run: |
           docker push '${{ env.IMAGE_NAME_MINOR }}'
           docker push '${{ env.IMAGE_NAME_UBUNTU_MINOR }}'
+          docker push '${{ env.IMAGE_LATEST_UBUNTU_MINOR }}'
 
       - name: Push Image Major
         if: "${{ matrix.version.sqlcmd_major != '' && github.ref == 'refs/heads/main' }}"
         run: |
           docker push '${{ env.IMAGE_NAME_MAJOR }}'
           docker push '${{ env.IMAGE_NAME_UBUNTU_MAJOR }}'
+          docker push '${{ env.IMAGE_LATEST_UBUNTU_MAJOR }}'
