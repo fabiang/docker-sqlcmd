@@ -108,3 +108,9 @@ jobs:
           docker push '${{ env.IMAGE_NAME_MAJOR }}'
           docker push '${{ env.IMAGE_NAME_UBUNTU_MAJOR }}'
           docker push '${{ env.IMAGE_LATEST_UBUNTU_MAJOR }}'
+
+      - name: Push Lastest
+        if: "${{ matrix.version.latest == true }}"
+        run: |
+          docker push '${{ env.IMAGE_LATEST }}'
+          docker push '${{ env.IMAGE_LATEST_UBUNTU }}'
