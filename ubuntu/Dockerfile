@@ -1,8 +1,6 @@
 ARG UBUNTU_VERSION=18.04
 FROM ubuntu:$UBUNTU_VERSION
 
-MAINTAINER Fabian Grutschus "docker@lubyte.de"
-
 ARG MSSQLTOOLS_VERSION=17.4.1.1-1
 ENV PATH=/opt/mssql-tools/bin:$PATH
 

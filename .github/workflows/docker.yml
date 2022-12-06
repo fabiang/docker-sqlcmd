@@ -1,0 +1,104 @@
+name: Docker Image
+
+on:
+  push:
+    paths-ignore:
+      - "README.md"
+      - "LICENSE"
+  pull_request:
+  schedule:
+    - cron: "0 12 1-7 * 2"
+
+jobs:
+  docker-image-ubuntu:
+    strategy:
+      matrix:
+        version:
+          - ubuntu: 18.04
+            sqlcmd: "17.4.1.1-1"
+            sqlcmd_minor: "17.4"
+            sqlcmd_major: ""
+            latest: false
+          - ubuntu: 22.04
+            sqlcmd: "17.10.1.1-1"
+            sqlcmd_minor: "17.10"
+            sqlcmd_major: "17"
+            latest: true # newest possible version available -> tag as latest ubuntu-latest
+
+    env:
+      IMAGE_NAME_FULL: "fabiang/sqlcmd:${{ matrix.version.sqlcmd }}"
+      IMAGE_NAME_MINOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_minor }}"
+      IMAGE_NAME_MAJOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_major }}"
+      IMAGE_NAME_UBUNTU_FULL: "fabiang/sqlcmd:${{ matrix.version.sqlcmd }}-ubuntu${{ matrix.version.ubuntu }}"
+      IMAGE_NAME_UBUNTU_MINOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_minor }}-ubuntu${{ matrix.version.ubuntu }}"
+      IMAGE_NAME_UBUNTU_MAJOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_major }}-ubuntu${{ matrix.version.ubuntu }}"
+      IMAGE_LATEST: "fabiang/sqlcmd:latest"
+      IMAGE_LATEST_UBUNTU: "fabiang/sqlcmd:ubuntu-latest"
+
+    runs-on: ubuntu-latest
+
+    name: "Sqlcmd v${{ matrix.version.sqlcmd }} (Ubuntu ${{ matrix.version.ubuntu }})"
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
+
+      - name: Build Image
+        run: |
+          docker build -f ubuntu/Dockerfile \
+            -t '${{ env.IMAGE_NAME_FULL }}' \
+            -t '${{ env.IMAGE_NAME_UBUNTU_FULL }}' \
+            '--build-arg=UBUNTU_VERSION=${{ matrix.version.ubuntu }}' \
+            '--build-arg=MSSQLTOOLS_VERSION=${{ matrix.version.sqlcmd }}' \
+            .
+
+      - name: Test image
+        run: |
+          docker run -t --rm --entrypoint='' \
+            '${{ env.IMAGE_NAME_FULL }}' \
+            sqlcmd -?
+
+      - name: Tag Minor
+        if: "${{ matrix.version.sqlcmd_minor != '' }}"
+        run: |
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_NAME_MINOR }}'
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_NAME_UBUNTU_MINOR }}'
+
+      - name: Tag Major
+        if: "${{ matrix.version.sqlcmd_major != '' }}"
+        run: |
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_NAME_MAJOR }}'
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_NAME_UBUNTU_MAJOR }}'
+
+      - name: Tag Latest
+        if: "${{ matrix.version.latest == true }}"
+        run: |
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_LATEST }}'
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_LATEST_UBUNTU }}'
+
+      - name: Docker Hub login
+        if: "${{ github.ref == 'refs/heads/main' }}"
+        uses: azure/docker-login@v1
+        with:
+          username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
+          password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+
+      - name: Push Image
+        if: "${{ github.ref == 'refs/heads/main' }}"
+        run: |
+          docker push '${{ env.IMAGE_NAME_FULL }}'
+          docker push '${{ env.IMAGE_NAME_UBUNTU_FULL }}'
+
+      - name: Push Image Minor
+        if: "${{ matrix.version.sqlcmd_minor != '' && github.ref == 'refs/heads/main' }}"
+        run: |
+          docker push '${{ env.IMAGE_NAME_MINOR }}'
+          docker push '${{ env.IMAGE_NAME_UBUNTU_MINOR }}'
+
+      - name: Push Image Major
+        if: "${{ matrix.version.sqlcmd_major != '' && github.ref == 'refs/heads/main' }}"
+        run: |
+          docker push '${{ env.IMAGE_NAME_MAJOR }}'
+          docker push '${{ env.IMAGE_NAME_UBUNTU_MAJOR }}'

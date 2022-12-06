@@ -4,6 +4,11 @@ Sqlcmd – command line tool for Microsoft SQL Server.
 
 [![fabiang/sqlcmd](http://dockeri.co/image/fabiang/sqlcmd)](https://registry.hub.docker.com/u/fabiang/sqlcmd/)
 
+## Available tags
+
+* 17.10.1.1-1-ubuntu22.04, 17.10.1.1-1, 17.10-ubuntu, 17.10, 17-ubuntu, 17, latest-ubuntu, latest
+* 17.4.1.1-1-ubuntu18.04, 17.4.1.1-1, 17.4-ubuntu, 17.4
+
 ## License
 
 When using this container you accept the licences from MICROSOFT SOFTWARE LICENSE TERMS
