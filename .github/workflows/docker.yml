@@ -4,7 +4,7 @@ on:
   push:
     paths-ignore:
       - "README.md"
-      - "LICENSE"
+      - "LICENSE.md"
   pull_request:
   schedule:
     - cron: "0 12 1-7 * 2"
