@@ -55,6 +55,39 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: SQLServer Checksum
+        id: sqlserver-checksum
+        shell: bash
+        run: | 
+          echo "checksum=$(curl --silent -L --header 'Accept: application/vnd.docker.distribution.manifest.v2+json' 'https://mcr.microsoft.com/v2/mssql/server/manifests/2022-latest' | jq -r '.config.digest')" >> $GITHUB_OUTPUT
+
+      - name: Cache Docker Image
+        id: docker-image-cache
+        uses: actions/cache@v3
+        with:
+          path: '*.tar'
+          key: docker-image-cache-${{ runner.os }}-${{ steps.sqlserver-checksum.outputs.checksum }}
+
+      - name: Load SQLServer image
+        if: steps.docker-image-cache.outputs.cache-hit == 'true'
+        run: docker image load -i sqlserver.tar
+
+      - name: Run SQL Server
+        run: |
+          docker run \
+            --pull always \
+            -e 'ACCEPT_EULA=Y' \
+            -e 'MSSQL_SA_PASSWORD=yourStrong(!)Password' \
+            -p 1433:1433 \
+            -d \
+            --name SQLServer \
+            --rm \
+            mcr.microsoft.com/mssql/server:2022-latest
+
+      - name: Save SQLServer image
+        if: steps.docker-image-cache.outputs.cache-hit != 'true'
+        run: docker image save -o sqlserver.tar mcr.microsoft.com/mssql/server:2022-latest
+
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
 
@@ -69,11 +102,23 @@ jobs:
             '--build-arg=MSSQLTOOLS_PATH=${{ matrix.version.package_path }}' \
             .
 
+      - name: Wait for SQLServer to become available
+        uses: iFaxity/wait-on-action@v1.1.0
+        with:
+          resource: tcp:localhost:1433
+          timeout: 1800000
+          interval: 5000
+          log: true
+
       - name: Test image
         run: |
-          docker run -t --rm --entrypoint='' \
+          docker run -t --rm --entrypoint='' --network=host \
             '${{ env.IMAGE_NAME_FULL }}' \
-            sqlcmd -?
+            sqlcmd -b -C -S 127.0.0.1,1433 -U sa -P 'yourStrong(!)Password' -Q 'SELECT @@VERSION'
+
+      - name: Stop SQLServer
+        if: always()
+        run: docker stop SQLServer
 
       - name: Tag Minor
         if: "${{ matrix.version.sqlcmd_minor != '' }}"
