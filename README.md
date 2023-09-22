@@ -1,4 +1,4 @@
-# fabian/sqlcmd
+# fabiang/sqlcmd
 
 Sqlcmd – command line tool for Microsoft SQL Server.  
 [Docker image for the new sqlcmd is also available](https://github.com/fabiang/docker-go-sqlcmd).
