@@ -15,10 +15,13 @@ Sqlcmd – command line tool for Microsoft SQL Server.
 
 ## License
 
-When using this container you accept the licences from MICROSOFT SOFTWARE LICENSE TERMS
-MICROSOFT ODBC DRIVER 13 FOR SQL SERVER [which can be found here](http://go.microsoft.com/fwlink/?LinkId=746838)
+When using this container you consent with the following licenses:
 
-All other parts of the library are licensed under [BSD 2-Clause License](LICENSE.md).
+- [MICROSOFT COMMAND LINE UTILITIES FOR SQL SERVER-UBUNTU LINUX](http://go.microsoft.com/fwlink/?LinkId=746949)
+- [MICROSOFT ODBC DRIVER 17 FOR SQL SERVER](licenses/msodbcsql17/LICENSE.txt) when using version 17.x of this Docker image
+- [MICROSOFT ODBC DRIVER 18 FOR SQL SERVER](licenses/msodbcsql18/LICENSE.txt) when using version 18.x of this Docker image
+
+All other parts of this repository are licensed under [BSD 2-Clause License](LICENSE.md).
 
 ## Usage
 
