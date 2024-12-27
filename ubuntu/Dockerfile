@@ -17,12 +17,16 @@ RUN apt-get -qqq update \
     && locale-gen "en_US.UTF-8" \
     \
     && export `grep "VERSION_ID" /etc/os-release | sed -e 's/^VERSION_ID=\"/VERSION_ID=/' -e 's/\"$//'` \
-    && mkdir -p /etc/apt/keyrings/ \
-    && curl --fail https://packages.microsoft.com/config/ubuntu/$VERSION_ID/prod.list | \
-        sed -E 's#deb\s+\[#deb [signed-by=/etc/apt/keyrings/microsoft.gpg #; t; q1' | \
-        tee /etc/apt/sources.list.d/microsoft.list \
+    && mkdir -p /usr/share/keyrings \
+    && curl --fail https://packages.microsoft.com/config/ubuntu/$VERSION_ID/prod.list \
+        -o /tmp/microsoft-prod.list | \
+        if ! grep -q "signed-by=" /tmp/microsoft-prod.list; then \
+            sed -E 's#deb\s+\[#deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg #; t; q1' | \
+        fi \
+    && mv /tmp/microsoft-prod.list /etc/apt/sources.list.d/microsoft.list \
+    && cat /etc/apt/sources.list.d/microsoft.list \
     && curl --fail https://packages.microsoft.com/keys/microsoft.asc | \
-        gpg --verbose --yes --no-tty --batch --dearmor -o /etc/apt/keyrings/microsoft.gpg \
+        gpg --verbose --yes --no-tty --batch --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
     \
     && apt-get -qqq update \
     && ACCEPT_EULA=Y apt-get install -y mssql-tools$MSSQLTOOLS_SUFFIX=$MSSQLTOOLS_VERSION unixodbc-dev \
