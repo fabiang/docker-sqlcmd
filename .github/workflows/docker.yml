@@ -31,6 +31,13 @@ jobs:
           - ubuntu: 22.04
             sqlcmd: "18.2.1.1-1"
             sqlcmd_minor: "18.2"
+            sqlcmd_major: ""
+            latest: false
+            package_suffix: "18"
+            package_path: "/opt/mssql-tools18"
+          - ubuntu: 24.04
+            sqlcmd: "18.4.1.1-1"
+            sqlcmd_minor: "18.4"
             sqlcmd_major: "18"
             latest: true # newest possible version available -> tag as latest ubuntu-latest
             package_suffix: "18"
