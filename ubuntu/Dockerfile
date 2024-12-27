@@ -20,7 +20,8 @@ RUN apt-get -qqq update \
     && mkdir -p /usr/share/keyrings \
     && curl --fail --show-error https://packages.microsoft.com/config/ubuntu/$VERSION_ID/prod.list -o /tmp/microsoft-prod.list \
     && if ! grep -q "signed-by=" /tmp/microsoft-prod.list; then \
-        sed -E 's#deb\s+\[#deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg #; t; q1' /tmp/microsoft-prod.list > /etc/apt/sources.list.d/microsoft.list; \
+        sed -E 's#deb\s+\[#deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg #; t; q1' /tmp/microsoft-prod.list > /etc/apt/sources.list.d/microsoft.list;
+        rm /tmp/microsoft-prod.list; \
     else \
         mv /tmp/microsoft-prod.list /etc/apt/sources.list.d/microsoft.list; \
     fi \
