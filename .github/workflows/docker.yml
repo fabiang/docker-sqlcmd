@@ -1,40 +1,181 @@
-ARG UBUNTU_VERSION=22.04
-FROM ubuntu:$UBUNTU_VERSION
+name: Docker Image
 
-ARG MSSQLTOOLS_VERSION=18.2.1.1
-# Microsoft decided to have a suffix for newer versions of mssql-tools, e.g. mssql-tools18
-ARG MSSQLTOOLS_SUFFIX=18
-# and also the path changed on newer versions. It's a mess.
-ARG MSSQLTOOLS_PATH=/opt/mssql-tools18
+on:
+  push:
+    paths-ignore:
+      - "README.md"
+      - "LICENSE.md"
+  pull_request:
+  schedule:
+    - cron: "0 12 1-7 * 2"
 
-ENV PATH=$MSSQLTOOLS_PATH/bin:$PATH
+jobs:
+  docker-image-ubuntu:
+    strategy:
+      matrix:
+        version:
+          - ubuntu: 18.04
+            sqlcmd: "17.4.1.1-1"
+            sqlcmd_minor: "17.4"
+            sqlcmd_major: ""
+            latest: false
+            package_suffix: ""
+            package_path: "/opt/mssql-tools"
+          - ubuntu: 22.04
+            sqlcmd: "17.10.1.1-1"
+            sqlcmd_minor: "17.10"
+            sqlcmd_major: "17"
+            latest: false
+            package_suffix: ""
+            package_path: "/opt/mssql-tools"
+          - ubuntu: 22.04
+            sqlcmd: "18.2.1.1-1"
+            sqlcmd_minor: "18.2"
+            sqlcmd_major: ""
+            latest: false
+            package_suffix: "18"
+            package_path: "/opt/mssql-tools18"
+          - ubuntu: 24.04
+            sqlcmd: "18.4.1.1-1"
+            sqlcmd_minor: "18.4"
+            sqlcmd_major: "18"
+            latest: true # newest possible version available -> tag as latest ubuntu-latest
+            package_suffix: "18"
+            package_path: "/opt/mssql-tools18"
 
-RUN apt-get -qqq update \
-    && apt-get install -y curl apt-transport-https locales gnupg2 \
-        # Helper command to convert \r\n to \n,
-        # since sqlcmd prints Windows line endings
-        dos2unix \
-    && locale-gen "en_US.UTF-8" \
-    \
-    && export `grep "VERSION_ID" /etc/os-release | sed -e 's/^VERSION_ID=\"/VERSION_ID=/' -e 's/\"$//'` \
-    && mkdir -p /usr/share/keyrings \
-    && curl --fail https://packages.microsoft.com/config/ubuntu/$VERSION_ID/prod.list \
-        -o /tmp/microsoft-prod.list | \
-        if ! grep -q "signed-by=" /tmp/microsoft-prod.list; then \
-            sed -E 's#deb\s+\[#deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg #; t; q1' | \
-        fi \
-    && mv /tmp/microsoft-prod.list /etc/apt/sources.list.d/microsoft.list \
-    && cat /etc/apt/sources.list.d/microsoft.list \
-    && curl --fail https://packages.microsoft.com/keys/microsoft.asc | \
-        gpg --verbose --yes --no-tty --batch --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
-    \
-    && apt-get -qqq update \
-    && ACCEPT_EULA=Y apt-get install -y mssql-tools$MSSQLTOOLS_SUFFIX=$MSSQLTOOLS_VERSION unixodbc-dev \
-    && apt-get remove -y curl apt-transport-https gnupg2 \
-    && rm -f /etc/apt/sources.list.d/msprod.list \
-    && rm -rf /var/lib/apt/lists/*
+    env:
+      IMAGE_NAME_FULL: "fabiang/sqlcmd:${{ matrix.version.sqlcmd }}"
+      IMAGE_NAME_MINOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_minor }}"
+      IMAGE_NAME_MAJOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_major }}"
+      IMAGE_NAME_UBUNTU_FULL: "fabiang/sqlcmd:${{ matrix.version.sqlcmd }}-ubuntu${{ matrix.version.ubuntu }}"
+      IMAGE_NAME_UBUNTU_MINOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_minor }}-ubuntu${{ matrix.version.ubuntu }}"
+      IMAGE_NAME_UBUNTU_MAJOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_major }}-ubuntu${{ matrix.version.ubuntu }}"
+      IMAGE_LATEST: "fabiang/sqlcmd:latest"
+      IMAGE_LATEST_UBUNTU: "fabiang/sqlcmd:ubuntu-latest"
+      IMAGE_LATEST_UBUNTU_MINOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_minor }}-ubuntu"
+      IMAGE_LATEST_UBUNTU_MAJOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_major }}-ubuntu"
 
-## should be set after locale was generated, overwise triggers warnings
-ENV LANG="en_US.UTF-8" LANGUAGE="en_US.UTF-8" LC_ALL="en_US.UTF-8"
+    runs-on: ubuntu-latest
 
-ENTRYPOINT ["sqlcmd"]
+    name: "Sqlcmd v${{ matrix.version.sqlcmd }} (Ubuntu ${{ matrix.version.ubuntu }})"
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: SQLServer Checksum
+        id: sqlserver-checksum
+        shell: bash
+        run: | 
+          echo "checksum=$(curl --silent -L --header 'Accept: application/vnd.docker.distribution.manifest.v2+json' 'https://mcr.microsoft.com/v2/mssql/server/manifests/2022-latest' | jq -r '.config.digest')" >> $GITHUB_OUTPUT
+
+      - name: Cache Docker Image
+        id: docker-image-cache
+        uses: actions/cache@v3
+        with:
+          path: '*.tar'
+          key: docker-image-cache-${{ runner.os }}-${{ steps.sqlserver-checksum.outputs.checksum }}
+
+      - name: Load SQLServer image
+        if: steps.docker-image-cache.outputs.cache-hit == 'true'
+        run: docker image load -i sqlserver.tar
+
+      - name: Run SQL Server
+        run: |
+          docker run \
+            --pull always \
+            -e 'ACCEPT_EULA=Y' \
+            -e 'MSSQL_SA_PASSWORD=yourStrong(!)Password' \
+            -p 1433:1433 \
+            -d \
+            --name SQLServer \
+            --rm \
+            mcr.microsoft.com/mssql/server:2022-latest
+
+      - name: Save SQLServer image
+        if: steps.docker-image-cache.outputs.cache-hit != 'true'
+        run: docker image save -o sqlserver.tar mcr.microsoft.com/mssql/server:2022-latest
+
+      - uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
+
+      - name: Build Image
+        run: |
+          docker build -f ubuntu/Dockerfile \
+            -t '${{ env.IMAGE_NAME_FULL }}' \
+            -t '${{ env.IMAGE_NAME_UBUNTU_FULL }}' \
+            '--build-arg=UBUNTU_VERSION=${{ matrix.version.ubuntu }}' \
+            '--build-arg=MSSQLTOOLS_VERSION=${{ matrix.version.sqlcmd }}' \
+            '--build-arg=MSSQLTOOLS_SUFFIX=${{ matrix.version.package_suffix }}' \
+            '--build-arg=MSSQLTOOLS_PATH=${{ matrix.version.package_path }}' \
+            .
+
+      - name: Wait for SQLServer to become available
+        uses: iFaxity/wait-on-action@v1.1.0
+        with:
+          resource: tcp:localhost:1433
+          timeout: 1800000
+          interval: 5000
+          log: true
+
+      - name: Test image
+        run: |
+          docker run -t --rm --entrypoint='' --network=host \
+            '${{ env.IMAGE_NAME_FULL }}' \
+            sqlcmd -b -C -S 127.0.0.1,1433 -U sa -P 'yourStrong(!)Password' -Q 'SELECT @@VERSION'
+
+      - name: Stop SQLServer
+        if: always()
+        run: docker stop SQLServer
+
+      - name: Tag Minor
+        if: "${{ matrix.version.sqlcmd_minor != '' }}"
+        run: |
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_NAME_MINOR }}'
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_NAME_UBUNTU_MINOR }}'
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_LATEST_UBUNTU_MINOR }}'
+
+      - name: Tag Major
+        if: "${{ matrix.version.sqlcmd_major != '' }}"
+        run: |
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_NAME_MAJOR }}'
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_NAME_UBUNTU_MAJOR }}'
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_LATEST_UBUNTU_MAJOR }}'
+
+      - name: Tag Latest
+        if: "${{ matrix.version.latest == true }}"
+        run: |
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_LATEST }}'
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_LATEST_UBUNTU }}'
+
+      - name: Docker Hub login
+        if: "${{ github.ref == 'refs/heads/main' }}"
+        uses: azure/docker-login@v1
+        with:
+          username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
+          password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+
+      - name: Push Image
+        if: "${{ github.ref == 'refs/heads/main' }}"
+        run: |
+          docker push '${{ env.IMAGE_NAME_FULL }}'
+          docker push '${{ env.IMAGE_NAME_UBUNTU_FULL }}'
+
+      - name: Push Image Minor
+        if: "${{ matrix.version.sqlcmd_minor != '' && github.ref == 'refs/heads/main' }}"
+        run: |
+          docker push '${{ env.IMAGE_NAME_MINOR }}'
+          docker push '${{ env.IMAGE_NAME_UBUNTU_MINOR }}'
+          docker push '${{ env.IMAGE_LATEST_UBUNTU_MINOR }}'
+
+      - name: Push Image Major
+        if: "${{ matrix.version.sqlcmd_major != '' && github.ref == 'refs/heads/main' }}"
+        run: |
+          docker push '${{ env.IMAGE_NAME_MAJOR }}'
+          docker push '${{ env.IMAGE_NAME_UBUNTU_MAJOR }}'
+          docker push '${{ env.IMAGE_LATEST_UBUNTU_MAJOR }}'
+
+      - name: Push Lastest
+        if: "${{ matrix.version.latest == true && github.ref == 'refs/heads/main' }}"
+        run: |
+          docker push '${{ env.IMAGE_LATEST }}'
+          docker push '${{ env.IMAGE_LATEST_UBUNTU }}'
