@@ -16,23 +16,21 @@ RUN apt-get -qqq update \
         dos2unix \
     && locale-gen "en_US.UTF-8" \
     \
-    && export `grep "VERSION_ID" /etc/os-release | sed -e 's/^VERSION_ID=\"/VERSION_ID=/' -e 's/\"$//'` \
+    && export $(grep "VERSION_ID" /etc/os-release | sed -e 's/^VERSION_ID=\"/VERSION_ID=/' -e 's/\"$//') \
     && mkdir -p /usr/share/keyrings \
-    && curl --fail https://packages.microsoft.com/config/ubuntu/$VERSION_ID/prod.list \
-        -o /tmp/microsoft-prod.list | \
-        if ! grep -q "signed-by=" /tmp/microsoft-prod.list; then \
-            sed -E 's#deb\s+\[#deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg #; t; q1' | \
-        fi \
-    && mv /tmp/microsoft-prod.list /etc/apt/sources.list.d/microsoft.list \
-    && cat /etc/apt/sources.list.d/microsoft.list \
-    && curl --fail https://packages.microsoft.com/keys/microsoft.asc | \
-        gpg --verbose --yes --no-tty --batch --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
+    && curl --fail --show-error https://packages.microsoft.com/config/ubuntu/$VERSION_ID/prod.list -o /tmp/microsoft-prod.list \
+    && if ! grep -q "signed-by=" /tmp/microsoft-prod.list; then \
+        sed -E 's#deb\s+\[#deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg #; t; q1' /tmp/microsoft-prod.list > /etc/apt/sources.list.d/microsoft.list; \
+    else \
+        mv /tmp/microsoft-prod.list /etc/apt/sources.list.d/microsoft.list; \
+    fi \
+    && curl --fail --show-error https://packages.microsoft.com/keys/microsoft.asc | \
+        gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
     \
     && apt-get -qqq update \
-    && ACCEPT_EULA=Y apt-get install -y mssql-tools$MSSQLTOOLS_SUFFIX=$MSSQLTOOLS_VERSION unixodbc-dev \
-    && apt-get remove -y curl apt-transport-https gnupg2 \
-    && rm -f /etc/apt/sources.list.d/msprod.list \
-    && rm -rf /var/lib/apt/lists/*
+    && ACCEPT_EULA=Y apt-get install -y --no-install-recommends mssql-tools$MSSQLTOOLS_SUFFIX=$MSSQLTOOLS_VERSION unixodbc-dev \
+    && apt-get autoremove -y && apt-get clean \
+    && rm -rf /tmp/* /var/lib/apt/lists/*
 
 ## should be set after locale was generated, overwise triggers warnings
 ENV LANG="en_US.UTF-8" LANGUAGE="en_US.UTF-8" LC_ALL="en_US.UTF-8"
