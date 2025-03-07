@@ -9,10 +9,13 @@ Sqlcmd – command line tool for Microsoft SQL Server.
 
 ## Available tags
 
-* 18.4.1.1-1-ubuntu24.04, 18.4.1.1-1, 18.4-ubuntu, 18.4, 18-ubuntu, 18, latest-ubuntu, latest
-* 18.2.1.1-1-ubuntu22.04, 18.2.1.1-1, 18.2-ubuntu, 18.2,
-* 17.10.1.1-1-ubuntu22.04, 17.10.1.1-1, 17.10-ubuntu, 17.10, 17-ubuntu, 17
-* 17.4.1.1-1-ubuntu18.04, 17.4.1.1-1, 17.4-ubuntu, 17.4
+* 18.4.1.1-1, 18.4-alpine, 18.4, 18-alpine, 18, latest-alpine, latest
+* 18.2.1.1-1, 18.2-alpine, 18.2
+* 17.10.1.1-1, 17.10-alpine, 17.10, 17-alpine, 17
+* 18.4.1.1-1-ubuntu24.04, 18.4.1.1-1, 18.4-ubuntu, 18.4, 18-ubuntu, 18, latest-ubuntu
+* 18.2.1.1-1-ubuntu22.04, 18.2.1.1-1, 18.2-ubuntu
+* 17.10.1.1-1-ubuntu22.04, 17.10.1.1-1, 17.10-ubuntu, 17.10, 17-ubuntu
+* 17.4.1.1-1-ubuntu18.04, 17.4.1.1-1, 17.4-ubuntu
 
 ## License
 
