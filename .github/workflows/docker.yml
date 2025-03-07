@@ -10,6 +10,184 @@ on:
     - cron: "0 12 1-7 * 2"
 
 jobs:
+  docker-image-alpine:
+    strategy:
+      matrix:
+        version:
+          - alpine: 3.21
+            sqlcmd: "17.10.1.1-1"
+            sqlcmd_minor: "17.10"
+            sqlcmd_major: "17"
+            msodbcsql_version: "17.10.6.1-1"
+            msodbcsql_suffix: 17
+            download_url: "https://download.microsoft.com/download/e/4/e/e4e67866-dffd-428c-aac7-8d28ddafb39b/"
+            latest: false
+            package_suffix: ""
+            package_path: "/opt/mssql-tools"
+          - alpine: 3.21
+            sqlcmd: "18.2.1.1-1"
+            sqlcmd_minor: "18.2"
+            sqlcmd_major: ""
+            msodbcsql_version: "18.2.1.1-1"
+            msodbcsql_suffix: 18
+            download_url: "https://download.microsoft.com/download/1/f/f/1fffb537-26ab-4947-a46a-7a45c27f6f77/"
+            latest: false
+            package_suffix: "18"
+            package_path: "/opt/mssql-tools18"
+          - alpine: 3.21
+            sqlcmd: "18.4.1.1-1"
+            sqlcmd_minor: "18.4"
+            sqlcmd_major: "18"
+            msodbcsql_version: "18.4.1.1-1"
+            msodbcsql_suffix: 18
+            download_url: "https://download.microsoft.com/download/7/6/d/76de322a-d860-4894-9945-f0cc5d6a45f8/"
+            latest: true # newest possible version available -> tag as latest alpine-latest
+            package_suffix: "18"
+            package_path: "/opt/mssql-tools18"
+
+    env:
+      IMAGE_NAME_FULL: "fabiang/sqlcmd:${{ matrix.version.sqlcmd }}"
+      IMAGE_NAME_MINOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_minor }}"
+      IMAGE_NAME_MAJOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_major }}"
+      IMAGE_NAME_ALPINE_FULL: "fabiang/sqlcmd:${{ matrix.version.sqlcmd }}-alpine${{ matrix.version.alpine }}"
+      IMAGE_NAME_ALPINE_MINOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_minor }}-alpine${{ matrix.version.alpine }}"
+      IMAGE_NAME_ALPINE_MAJOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_major }}-alpine${{ matrix.version.alpine }}"
+      IMAGE_LATEST: "fabiang/sqlcmd:latest"
+      IMAGE_LATEST_ALPINE: "fabiang/sqlcmd:alpine-latest"
+      IMAGE_LATEST_ALPINE_MINOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_minor }}-alpine"
+      IMAGE_LATEST_ALPINE_MAJOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_major }}-alpine"
+
+    runs-on: ubuntu-latest
+
+    name: "Sqlcmd v${{ matrix.version.sqlcmd }} (Alpine ${{ matrix.version.alpine }})"
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: SQLServer Checksum
+        id: sqlserver-checksum
+        shell: bash
+        run: | 
+          echo "checksum=$(curl --silent -L --header 'Accept: application/vnd.docker.distribution.manifest.v2+json' 'https://mcr.microsoft.com/v2/mssql/server/manifests/2022-latest' | jq -r '.config.digest')" >> $GITHUB_OUTPUT
+
+      - name: Cache Docker Image
+        id: docker-image-cache
+        uses: actions/cache@v3
+        with:
+          path: '*.tar'
+          key: docker-image-cache-${{ runner.os }}-${{ steps.sqlserver-checksum.outputs.checksum }}
+
+      - name: Load SQLServer image
+        if: steps.docker-image-cache.outputs.cache-hit == 'true'
+        run: docker image load -i sqlserver.tar
+
+      - name: Run SQL Server
+        run: |
+          docker run \
+            --pull always \
+            -e 'ACCEPT_EULA=Y' \
+            -e 'MSSQL_SA_PASSWORD=yourStrong(!)Password' \
+            -p 1433:1433 \
+            -d \
+            --name SQLServer \
+            --rm \
+            mcr.microsoft.com/mssql/server:2022-latest
+
+      - name: Save SQLServer image
+        if: steps.docker-image-cache.outputs.cache-hit != 'true'
+        run: docker image save -o sqlserver.tar mcr.microsoft.com/mssql/server:2022-latest
+
+      - uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
+
+      - name: Build Image
+        run: |
+          docker build -f alpine/Dockerfile \
+            -t '${{ env.IMAGE_NAME_FULL }}' \
+            -t '${{ env.IMAGE_NAME_ALPINE_FULL }}' \
+            '--build-arg=ALPINE_VERSION=${{ matrix.version.alpine }}' \
+            \
+            '--build-arg=MSSQLTOOLS_VERSION=${{ matrix.version.sqlcmd }}' \
+            '--build-arg=MSSQLTOOLS_SUFFIX=${{ matrix.version.package_suffix }}' \
+            '--build-arg=MSSQLTOOLS_PATH=${{ matrix.version.package_path }}' \
+            \
+            '--build-arg=MSODBCSQL_VERSION=${{ matrix.version.msodbcsql_version }}' \
+            '--build-arg=MSODBCSQL_SUFFIX=${{ matrix.version.msodbcsql_suffix }}' \
+            \
+            '--build-arg=MICROSOFT_DOWNLOAD_URL=${{ matrix.version.download_url }}' \
+            .
+
+      - name: Wait for SQLServer to become available
+        uses: iFaxity/wait-on-action@v1.1.0
+        with:
+          resource: tcp:localhost:1433
+          timeout: 1800000
+          interval: 5000
+          log: true
+
+      - name: Test image
+        run: |
+          docker run -t --rm --entrypoint='' --network=host \
+            '${{ env.IMAGE_NAME_FULL }}' \
+            sqlcmd -b -C -S 127.0.0.1,1433 -U sa -P 'yourStrong(!)Password' -Q 'SELECT @@VERSION'
+
+      - name: Stop SQLServer
+        if: always()
+        run: docker stop SQLServer
+
+      - name: Tag Minor
+        if: "${{ matrix.version.sqlcmd_minor != '' }}"
+        run: |
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_NAME_MINOR }}'
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_NAME_ALPINE_MINOR }}'
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_LATEST_ALPINE_MINOR }}'
+
+      - name: Tag Major
+        if: "${{ matrix.version.sqlcmd_major != '' }}"
+        run: |
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_NAME_MAJOR }}'
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_NAME_ALPINE_MAJOR }}'
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_LATEST_ALPINE_MAJOR }}'
+
+      - name: Tag Latest
+        if: "${{ matrix.version.latest == true }}"
+        run: |
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_LATEST }}'
+          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_LATEST_ALPINE }}'
+
+      - name: Docker Hub login
+        if: "${{ github.ref == 'refs/heads/main' }}"
+        uses: azure/docker-login@v1
+        with:
+          username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
+          password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+
+      - name: Push Image
+        if: "${{ github.ref == 'refs/heads/main' }}"
+        run: |
+          docker push '${{ env.IMAGE_NAME_FULL }}'
+          docker push '${{ env.IMAGE_NAME_ALPINE_FULL }}'
+
+      - name: Push Image Minor
+        if: "${{ matrix.version.sqlcmd_minor != '' && github.ref == 'refs/heads/main' }}"
+        run: |
+          docker push '${{ env.IMAGE_NAME_MINOR }}'
+          docker push '${{ env.IMAGE_NAME_ALPINE_MINOR }}'
+          docker push '${{ env.IMAGE_LATEST_ALPINE_MINOR }}'
+
+      - name: Push Image Major
+        if: "${{ matrix.version.sqlcmd_major != '' && github.ref == 'refs/heads/main' }}"
+        run: |
+          docker push '${{ env.IMAGE_NAME_MAJOR }}'
+          docker push '${{ env.IMAGE_NAME_ALPINE_MAJOR }}'
+          docker push '${{ env.IMAGE_LATEST_ALPINE_MAJOR }}'
+
+      - name: Push Lastest
+        if: "${{ matrix.version.latest == true && github.ref == 'refs/heads/main' }}"
+        run: |
+          docker push '${{ env.IMAGE_LATEST }}'
+          docker push '${{ env.IMAGE_LATEST_ALPINE }}'
+
   docker-image-ubuntu:
     strategy:
       matrix:
@@ -24,7 +202,7 @@ jobs:
           - ubuntu: 22.04
             sqlcmd: "17.10.1.1-1"
             sqlcmd_minor: "17.10"
-            sqlcmd_major: "17"
+            sqlcmd_major: ""
             latest: false
             package_suffix: ""
             package_path: "/opt/mssql-tools"
@@ -39,18 +217,17 @@ jobs:
             sqlcmd: "18.4.1.1-1"
             sqlcmd_minor: "18.4"
             sqlcmd_major: "18"
-            latest: true # newest possible version available -> tag as latest ubuntu-latest
+            latest: true
             package_suffix: "18"
             package_path: "/opt/mssql-tools18"
 
     env:
-      IMAGE_NAME_FULL: "fabiang/sqlcmd:${{ matrix.version.sqlcmd }}"
-      IMAGE_NAME_MINOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_minor }}"
-      IMAGE_NAME_MAJOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_major }}"
+      IMAGE_NAME_FULL: "fabiang/sqlcmd:${{ matrix.version.sqlcmd }}-ubuntu"
+      IMAGE_NAME_MINOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_minor }}-ubuntu"
+      IMAGE_NAME_MAJOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_major }}-ubuntu"
       IMAGE_NAME_UBUNTU_FULL: "fabiang/sqlcmd:${{ matrix.version.sqlcmd }}-ubuntu${{ matrix.version.ubuntu }}"
       IMAGE_NAME_UBUNTU_MINOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_minor }}-ubuntu${{ matrix.version.ubuntu }}"
       IMAGE_NAME_UBUNTU_MAJOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_major }}-ubuntu${{ matrix.version.ubuntu }}"
-      IMAGE_LATEST: "fabiang/sqlcmd:latest"
       IMAGE_LATEST_UBUNTU: "fabiang/sqlcmd:ubuntu-latest"
       IMAGE_LATEST_UBUNTU_MINOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_minor }}-ubuntu"
       IMAGE_LATEST_UBUNTU_MAJOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_major }}-ubuntu"
@@ -144,7 +321,6 @@ jobs:
       - name: Tag Latest
         if: "${{ matrix.version.latest == true }}"
         run: |
-          docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_LATEST }}'
           docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_LATEST_UBUNTU }}'
 
       - name: Docker Hub login
@@ -157,7 +333,6 @@ jobs:
       - name: Push Image
         if: "${{ github.ref == 'refs/heads/main' }}"
         run: |
-          docker push '${{ env.IMAGE_NAME_FULL }}'
           docker push '${{ env.IMAGE_NAME_UBUNTU_FULL }}'
 
       - name: Push Image Minor
@@ -177,5 +352,4 @@ jobs:
       - name: Push Lastest
         if: "${{ matrix.version.latest == true && github.ref == 'refs/heads/main' }}"
         run: |
-          docker push '${{ env.IMAGE_LATEST }}'
           docker push '${{ env.IMAGE_LATEST_UBUNTU }}'
