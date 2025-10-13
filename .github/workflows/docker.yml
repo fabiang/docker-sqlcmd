@@ -68,7 +68,7 @@ jobs:
         id: sqlserver-checksum
         shell: bash
         run: | 
-          echo "checksum=$(curl --silent -L --header 'Accept: application/vnd.docker.distribution.manifest.v2+json' 'https://mcr.microsoft.com/v2/mssql/server/manifests/2022-latest' | jq -r '.config.digest')" >> $GITHUB_OUTPUT
+          echo "checksum=$(curl --silent -L --header 'Accept: application/vnd.docker.distribution.manifest.v2+json' 'https://mcr.microsoft.com/v2/mssql/server/manifests/2025-latest' | jq -r '.config.digest')" >> $GITHUB_OUTPUT
 
       - name: Cache Docker Image
         id: docker-image-cache
@@ -91,11 +91,11 @@ jobs:
             -d \
             --name SQLServer \
             --rm \
-            mcr.microsoft.com/mssql/server:2022-latest
+            mcr.microsoft.com/mssql/server:2025-latest
 
       - name: Save SQLServer image
         if: steps.docker-image-cache.outputs.cache-hit != 'true'
-        run: docker image save -o sqlserver.tar mcr.microsoft.com/mssql/server:2022-latest
+        run: docker image save -o sqlserver.tar mcr.microsoft.com/mssql/server:2025-latest
 
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
@@ -243,7 +243,7 @@ jobs:
         id: sqlserver-checksum
         shell: bash
         run: | 
-          echo "checksum=$(curl --silent -L --header 'Accept: application/vnd.docker.distribution.manifest.v2+json' 'https://mcr.microsoft.com/v2/mssql/server/manifests/2022-latest' | jq -r '.config.digest')" >> $GITHUB_OUTPUT
+          echo "checksum=$(curl --silent -L --header 'Accept: application/vnd.docker.distribution.manifest.v2+json' 'https://mcr.microsoft.com/v2/mssql/server/manifests/2025-latest' | jq -r '.config.digest')" >> $GITHUB_OUTPUT
 
       - name: Cache Docker Image
         id: docker-image-cache
@@ -266,11 +266,11 @@ jobs:
             -d \
             --name SQLServer \
             --rm \
-            mcr.microsoft.com/mssql/server:2022-latest
+            mcr.microsoft.com/mssql/server:2025-latest
 
       - name: Save SQLServer image
         if: steps.docker-image-cache.outputs.cache-hit != 'true'
-        run: docker image save -o sqlserver.tar mcr.microsoft.com/mssql/server:2022-latest
+        run: docker image save -o sqlserver.tar mcr.microsoft.com/mssql/server:2025-latest
 
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
