@@ -32,13 +32,14 @@ RUN apk add --update curl gnupg \
     && curl -v --fail -O ${MICROSOFT_DOWNLOAD_URL}${MSODBCSQL_PACKAGE}.sig \
     && curl -v --fail -O ${MICROSOFT_DOWNLOAD_URL}${MSSQL_TOOLS_PACKAGE}.sig \
     \
-    && curl https://packages.microsoft.com/keys/microsoft.asc  | gpg --import - \
+    && curl https://packages.microsoft.com/keys/microsoft.asc | gpg --import - \
 	&& gpg --verify ${MSODBCSQL_PACKAGE}.sig ${MSODBCSQL_PACKAGE}.apk \
 	&& gpg --verify ${MSSQL_TOOLS_PACKAGE}.sig ${MSSQL_TOOLS_PACKAGE}.apk \
     \
     && apk add --allow-untrusted ${MSODBCSQL_PACKAGE}.apk \
 	&& apk add --allow-untrusted ${MSSQL_TOOLS_PACKAGE}.apk \
-	&& rm -f ${MSODBCSQL_PACKAGE}.apk ${MSSQL_TOOLS_PACKAGE}.apk
+	&& rm -f ${MSODBCSQL_PACKAGE}.apk ${MSSQL_TOOLS_PACKAGE}.apk \
+    && rm -rf /var/cache/apk/*
 
 ## should be set after locale was generated, overwise triggers warnings
 ENV LANG="en_US.UTF-8" LANGUAGE="en_US.UTF-8" LC_ALL="en_US.UTF-8"
