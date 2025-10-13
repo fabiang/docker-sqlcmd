@@ -7,7 +7,7 @@ on:
       - "LICENSE.md"
   pull_request:
   schedule:
-    - cron: "0 12 1-7 * 2"
+    - cron: "0 12 1-7 * 3"
 
 jobs:
   docker-image-alpine:
