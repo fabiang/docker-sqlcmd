@@ -53,7 +53,7 @@ jobs:
       IMAGE_NAME_ALPINE_MINOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_minor }}-alpine${{ matrix.version.alpine }}"
       IMAGE_NAME_ALPINE_MAJOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_major }}-alpine${{ matrix.version.alpine }}"
       IMAGE_LATEST: "fabiang/sqlcmd:latest"
-      IMAGE_LATEST_ALPINE: "fabiang/sqlcmd:alpine-latest"
+      IMAGE_LATEST_ALPINE: "fabiang/sqlcmd:latest-alpine"
       IMAGE_LATEST_ALPINE_MINOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_minor }}-alpine"
       IMAGE_LATEST_ALPINE_MAJOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_major }}-alpine"
 
