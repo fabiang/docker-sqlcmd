@@ -3,6 +3,8 @@
 Sqlcmd – command line tool for Microsoft SQL Server.  
 [Docker image for the new sqlcmd is also available](https://github.com/fabiang/docker-go-sqlcmd).
 
+This image also includes a small program called [dos2unix](https://linux.die.net/man/1/dos2unix), which allows converting Windows line endings to Unix, as sqlcmd returns data with "\r\n".
+
 [![fabiang/sqlcmd](https://img.shields.io/docker/pulls/fabiang/sqlcmd.svg)](https://hub.docker.com/r/fabiang/sqlcmd)
 [![fabiang/sqlcmd](https://badgen.net/github/license/fabiang/docker-sqlcmd)](https://github.com/fabiang/docker-sqlcmd)
 [![Docker Image](https://github.com/fabiang/docker-sqlcmd/actions/workflows/docker.yml/badge.svg)](https://github.com/fabiang/docker-sqlcmd/actions/workflows/docker.yml)
