@@ -228,7 +228,7 @@ jobs:
       IMAGE_NAME_UBUNTU_FULL: "fabiang/sqlcmd:${{ matrix.version.sqlcmd }}-ubuntu${{ matrix.version.ubuntu }}"
       IMAGE_NAME_UBUNTU_MINOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_minor }}-ubuntu${{ matrix.version.ubuntu }}"
       IMAGE_NAME_UBUNTU_MAJOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_major }}-ubuntu${{ matrix.version.ubuntu }}"
-      IMAGE_LATEST_UBUNTU: "fabiang/sqlcmd:ubuntu-latest"
+      IMAGE_LATEST_UBUNTU: "fabiang/sqlcmd:latest-ubuntu"
       IMAGE_LATEST_UBUNTU_MINOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_minor }}-ubuntu"
       IMAGE_LATEST_UBUNTU_MAJOR: "fabiang/sqlcmd:${{ matrix.version.sqlcmd_major }}-ubuntu"
 
