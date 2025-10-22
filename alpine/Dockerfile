@@ -18,10 +18,10 @@ ARG MICROSOFT_DOWNLOAD_URL=https://download.microsoft.com/download/7/6/d/76de322
 
 ENV PATH=$MSSQLTOOLS_PATH/bin:$PATH
 
-RUN apk add --update curl gnupg \
-        # Helper command to convert \r\n to \n,
-        # since sqlcmd prints Windows line endings
-        dos2unix; \
+RUN apk add --update --no-cache --virtual .install-deps curl gnupg \
+    # Helper command to convert \r\n to \n,
+    # since sqlcmd prints Windows line endings
+    && apk add --update --no-cache dos2unix; \
     \
     export MSODBCSQL_PACKAGE=msodbcsql${MSODBCSQL_SUFFIX}_${MSODBCSQL_VERSION}_${TARGETARCH}; \
     export MSSQL_TOOLS_PACKAGE=mssql-tools${MSSQLTOOLS_SUFFIX}_${MSSQLTOOLS_VERSION}_${TARGETARCH}; \
@@ -38,6 +38,7 @@ RUN apk add --update curl gnupg \
     \
     && apk add --allow-untrusted ${MSODBCSQL_PACKAGE}.apk \
 	&& apk add --allow-untrusted ${MSSQL_TOOLS_PACKAGE}.apk \
+	&& apk del .install-deps \
 	&& rm -f ${MSODBCSQL_PACKAGE}.apk ${MSSQL_TOOLS_PACKAGE}.apk \
     && rm -rf /var/cache/apk/*
 
