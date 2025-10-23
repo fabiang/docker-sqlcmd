@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         version:
-          - alpine: 3.21
+          - alpine: 3.22
             sqlcmd: "17.10.1.1-1"
             sqlcmd_minor: "17.10"
             sqlcmd_major: "17"
@@ -24,7 +24,7 @@ jobs:
             latest: false
             package_suffix: ""
             package_path: "/opt/mssql-tools"
-          - alpine: 3.21
+          - alpine: 3.22
             sqlcmd: "18.2.1.1-1"
             sqlcmd_minor: "18.2"
             sqlcmd_major: ""
@@ -34,7 +34,7 @@ jobs:
             latest: false
             package_suffix: "18"
             package_path: "/opt/mssql-tools18"
-          - alpine: 3.21
+          - alpine: 3.22
             sqlcmd: "18.4.1.1-1"
             sqlcmd_minor: "18.4"
             sqlcmd_major: "18"
