@@ -62,17 +62,17 @@ jobs:
     name: "Sqlcmd v${{ matrix.version.sqlcmd }} (Alpine ${{ matrix.version.alpine }})"
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
 
       - name: SQLServer Checksum
         id: sqlserver-checksum
         shell: bash
-        run: | 
+        run: |
           echo "checksum=$(curl --silent -L --header 'Accept: application/vnd.docker.distribution.manifest.v2+json' 'https://mcr.microsoft.com/v2/mssql/server/manifests/2025-latest' | jq -r '.config.digest')" >> $GITHUB_OUTPUT
 
       - name: Cache Docker Image
         id: docker-image-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '*.tar'
           key: docker-image-cache-${{ runner.os }}-${{ steps.sqlserver-checksum.outputs.checksum }}
@@ -118,7 +118,7 @@ jobs:
             .
 
       - name: Wait for SQLServer to become available
-        uses: iFaxity/wait-on-action@v1.1.0
+        uses: iFaxity/wait-on-action@v1.2.1
         with:
           resource: tcp:localhost:1433
           timeout: 1800000
@@ -157,7 +157,7 @@ jobs:
 
       - name: Docker Hub login
         if: "${{ github.ref == 'refs/heads/main' }}"
-        uses: azure/docker-login@v1
+        uses: azure/docker-login@v2
         with:
           username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
           password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
@@ -237,17 +237,17 @@ jobs:
     name: "Sqlcmd v${{ matrix.version.sqlcmd }} (Ubuntu ${{ matrix.version.ubuntu }})"
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
 
       - name: SQLServer Checksum
         id: sqlserver-checksum
         shell: bash
-        run: | 
+        run: |
           echo "checksum=$(curl --silent -L --header 'Accept: application/vnd.docker.distribution.manifest.v2+json' 'https://mcr.microsoft.com/v2/mssql/server/manifests/2025-latest' | jq -r '.config.digest')" >> $GITHUB_OUTPUT
 
       - name: Cache Docker Image
         id: docker-image-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '*.tar'
           key: docker-image-cache-${{ runner.os }}-${{ steps.sqlserver-checksum.outputs.checksum }}
@@ -287,7 +287,7 @@ jobs:
             .
 
       - name: Wait for SQLServer to become available
-        uses: iFaxity/wait-on-action@v1.1.0
+        uses: iFaxity/wait-on-action@v1.2.1
         with:
           resource: tcp:localhost:1433
           timeout: 1800000
@@ -325,7 +325,7 @@ jobs:
 
       - name: Docker Hub login
         if: "${{ github.ref == 'refs/heads/main' }}"
-        uses: azure/docker-login@v1
+        uses: azure/docker-login@v2
         with:
           username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
           password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
