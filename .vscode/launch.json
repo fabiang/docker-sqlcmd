@@ -1,0 +1,24 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "dockerfile",
+            "request": "launch",
+            "name": "Docker: Build Alpine",
+            "dockerfile": "${workspaceFolder}/alpine/Dockerfile",
+            "contextPath": "${workspaceFolder}/alpine",
+            "args": ["-t", "docker-sqlcmd:alpine"]
+        },
+        {
+            "type": "dockerfile",
+            "request": "launch",
+            "name": "Docker: Build Ubuntu",
+            "dockerfile": "${workspaceFolder}/ubuntu/Dockerfile",
+            "contextPath": "${workspaceFolder}/ubuntu",
+            "args": ["-t", "docker-sqlcmd:ubuntu"]
+        }
+    ]
+}

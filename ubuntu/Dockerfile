@@ -1,7 +1,8 @@
-ARG UBUNTU_VERSION=22.04
+ARG UBUNTU_VERSION=24.04
 FROM ubuntu:$UBUNTU_VERSION
 
-ARG MSSQLTOOLS_VERSION=18.2.1.1
+# Check latest published version here: https://packages.microsoft.com/ubuntu/24.04/prod/pool/main/m/mssql-tools18/
+ARG MSSQLTOOLS_VERSION=18.4.1.1-1
 # Microsoft decided to have a suffix for newer versions of mssql-tools, e.g. mssql-tools18
 ARG MSSQLTOOLS_SUFFIX=18
 # and also the path changed on newer versions. It's a mess.
