@@ -9,6 +9,9 @@ on:
   schedule:
     - cron: "0 12 1-7 * 3"
 
+env:
+  SHOULD_PUSH: ${{ github.repository_owner == 'fabiang' && github.ref == 'refs/heads/main' }}
+
 jobs:
   docker-image-alpine:
     strategy:
@@ -153,34 +156,34 @@ jobs:
           docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_LATEST_ALPINE }}'
 
       - name: Docker Hub login
-        if: "${{ github.ref == 'refs/heads/main' }}"
+        if: ${{ env.SHOULD_PUSH == 'true' }}
         uses: azure/docker-login@v2
         with:
           username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
           password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
 
       - name: Push Image
-        if: "${{ github.ref == 'refs/heads/main' }}"
+        if: ${{ env.SHOULD_PUSH == 'true' }}
         run: |
           docker push '${{ env.IMAGE_NAME_FULL }}'
           docker push '${{ env.IMAGE_NAME_ALPINE_FULL }}'
 
       - name: Push Image Minor
-        if: "${{ matrix.version.sqlcmd_minor != '' && github.ref == 'refs/heads/main' }}"
+        if: ${{ env.SHOULD_PUSH == 'true' && matrix.version.sqlcmd_minor != '' }}
         run: |
           docker push '${{ env.IMAGE_NAME_MINOR }}'
           docker push '${{ env.IMAGE_NAME_ALPINE_MINOR }}'
           docker push '${{ env.IMAGE_LATEST_ALPINE_MINOR }}'
 
       - name: Push Image Major
-        if: "${{ matrix.version.sqlcmd_major != '' && github.ref == 'refs/heads/main' }}"
+        if: ${{ env.SHOULD_PUSH == 'true' && matrix.version.sqlcmd_major != '' }}
         run: |
           docker push '${{ env.IMAGE_NAME_MAJOR }}'
           docker push '${{ env.IMAGE_NAME_ALPINE_MAJOR }}'
           docker push '${{ env.IMAGE_LATEST_ALPINE_MAJOR }}'
 
       - name: Push Lastest
-        if: "${{ matrix.version.latest == true && github.ref == 'refs/heads/main' }}"
+        if: ${{ env.SHOULD_PUSH == 'true' && matrix.version.latest == true }}
         run: |
           docker push '${{ env.IMAGE_LATEST }}'
           docker push '${{ env.IMAGE_LATEST_ALPINE }}'
@@ -318,32 +321,32 @@ jobs:
           docker tag '${{ env.IMAGE_NAME_FULL }}' '${{ env.IMAGE_LATEST_UBUNTU }}'
 
       - name: Docker Hub login
-        if: "${{ github.ref == 'refs/heads/main' }}"
+        if: ${{ env.SHOULD_PUSH == 'true' }}
         uses: azure/docker-login@v2
         with:
           username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
           password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
 
       - name: Push Image
-        if: "${{ github.ref == 'refs/heads/main' }}"
+        if: ${{ env.SHOULD_PUSH == 'true' }}
         run: |
           docker push '${{ env.IMAGE_NAME_UBUNTU_FULL }}'
 
       - name: Push Image Minor
-        if: "${{ matrix.version.sqlcmd_minor != '' && github.ref == 'refs/heads/main' }}"
+        if: ${{ env.SHOULD_PUSH == 'true' && matrix.version.sqlcmd_minor != '' }}
         run: |
           docker push '${{ env.IMAGE_NAME_MINOR }}'
           docker push '${{ env.IMAGE_NAME_UBUNTU_MINOR }}'
           docker push '${{ env.IMAGE_LATEST_UBUNTU_MINOR }}'
 
       - name: Push Image Major
-        if: "${{ matrix.version.sqlcmd_major != '' && github.ref == 'refs/heads/main' }}"
+        if: ${{ env.SHOULD_PUSH == 'true' && matrix.version.sqlcmd_major != '' }}
         run: |
           docker push '${{ env.IMAGE_NAME_MAJOR }}'
           docker push '${{ env.IMAGE_NAME_UBUNTU_MAJOR }}'
           docker push '${{ env.IMAGE_LATEST_UBUNTU_MAJOR }}'
 
       - name: Push Lastest
-        if: "${{ matrix.version.latest == true && github.ref == 'refs/heads/main' }}"
+        if: ${{ env.SHOULD_PUSH == 'true' && matrix.version.latest == true }}
         run: |
           docker push '${{ env.IMAGE_LATEST_UBUNTU }}'
