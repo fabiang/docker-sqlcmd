@@ -123,6 +123,14 @@ jobs:
             --rm \
             mcr.microsoft.com/mssql/server:2025-latest
 
+      - name: Wait for SQLServer to become available
+        uses: iFaxity/wait-on-action@v1.2.1
+        with:
+          resource: tcp:localhost:1433
+          timeout: 1800000
+          interval: 5000
+          log: true
+
       - name: Save SQLServer image
         if: steps.docker-image-cache.outputs.cache-hit != 'true'
         run: docker image save -o sqlserver.tar mcr.microsoft.com/mssql/server:2025-latest
@@ -144,14 +152,6 @@ jobs:
             '--build-arg=MICROSOFT_DOWNLOAD_URL_MSODBC=${{ matrix.version.download_url_msodbc }}' \
             '--build-arg=MICROSOFT_DOWNLOAD_URL_TOOLS=${{ matrix.version.download_url_mssql }}' \
             .
-
-      - name: Wait for SQLServer to become available
-        uses: iFaxity/wait-on-action@v1.2.1
-        with:
-          resource: tcp:localhost:1433
-          timeout: 1800000
-          interval: 5000
-          log: true
 
       - name: Test image
         run: |
