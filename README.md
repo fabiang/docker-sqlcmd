@@ -1,6 +1,6 @@
 # fabiang/sqlcmd
 
-Sqlcmd – command line tool for Microsoft SQL Server.  
+Sqlcmd – command line tool for Microsoft SQL Server.
 [Docker image for the new sqlcmd is also available](https://github.com/fabiang/docker-go-sqlcmd).
 
 This image also includes a small program called [dos2unix](https://linux.die.net/man/1/dos2unix), which allows converting Windows line endings to Unix, as sqlcmd returns data with "\r\n".
@@ -11,9 +11,14 @@ This image also includes a small program called [dos2unix](https://linux.die.net
 
 ## Available tags
 
-* 18.4.1.1-1, 18.4-alpine, 18.4, 18-alpine, 18, latest-alpine, latest
+* 18.6.2.1-1, 18.6-alpine, 18.6, 18-alpine, 18, latest-alpine, latest
+* 18.4.1.1-1, 18.4-alpine, 18.4
 * 18.2.1.1-1, 18.2-alpine, 18.2
-* 17.10.1.1-1, 17.10-alpine, 17.10, 17-alpine, 17
+* 17.11.1.1-1, 17.11-alpine, 17.11, 17-alpine, 17
+* 17.10.1.1-1, 17.10-alpine
+
+**Warning: Ubuntu images are no longer build as of July 22 2026**
+
 * 18.4.1.1-1-ubuntu24.04, 18.4.1.1-1, 18.4-ubuntu, 18.4, 18-ubuntu, 18, latest-ubuntu
 * 18.2.1.1-1-ubuntu22.04, 18.2.1.1-1, 18.2-ubuntu
 * 17.10.1.1-1-ubuntu22.04, 17.10.1.1-1, 17.10-ubuntu, 17.10, 17-ubuntu
