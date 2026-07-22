@@ -1,5 +1,7 @@
 licences/
+.editorconfig
 .github/
 .vscode/
 LICENSE.md
 README.md
+mise.toml
