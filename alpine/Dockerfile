@@ -1,56 +1,95 @@
 #syntax=docker/dockerfile:1
+
 ARG ALPINE_VERSION=3.22
 FROM --platform=$BUILDPLATFORM alpine:${ALPINE_VERSION}
 
 ARG TARGETARCH
 
-ARG MSODBCSQL_VERSION=18.6.2.1-1
-ARG MSSQLTOOLS_VERSION=18.6.2.1-1
-
-# Microsoft decided to have a suffix for newer versions of mssql-tools, e.g. mssql-tools18
-ARG MSSQLTOOLS_SUFFIX=18
-ARG MSODBCSQL_SUFFIX=18
-
-# and also the path changed on newer versions. It's a mess.
-ARG MSSQLTOOLS_PATH=/opt/mssql-tools18
-
 ARG MICROSOFT_DOWNLOAD_URL_MSODBC=https://download.microsoft.com/download/0b3d5518-b4a7-4a2b-afc7-7ee9e967f93c/msodbcsql18_18.6.2.1-1_amd64.apk
 ARG MICROSOFT_DOWNLOAD_URL_TOOLS=https://download.microsoft.com/download/cad0d30f-b9b1-4765-a011-81d8a66c8b8d/mssql-tools18_18.6.2.1-1_amd64.apk
-ENV PATH=$MSSQLTOOLS_PATH/bin:$PATH
 
-RUN apk add --no-cache --virtual .install-deps curl gnupg \
-    # Helper command to convert \r\n to \n,
-    # since sqlcmd prints Windows line endings
-    && apk add --no-cache dos2unix \
-    && export MSODBCSQL_PACKAGE="msodbcsql${MSODBCSQL_SUFFIX}_${MSODBCSQL_VERSION}_${TARGETARCH}" \
-    && export MSSQL_TOOLS_PACKAGE="mssql-tools${MSSQLTOOLS_SUFFIX}_${MSSQLTOOLS_VERSION}_${TARGETARCH}" \
-    && export MICROSOFT_DOWNLOAD_URL_MSODBC_SIG="${MICROSOFT_DOWNLOAD_URL_MSODBC%.apk}.sig" \
-    && export MICROSOFT_DOWNLOAD_URL_TOOLS_SIG="${MICROSOFT_DOWNLOAD_URL_TOOLS%.apk}.sig" \
-    \
-    && echo "Download '${MICROSOFT_DOWNLOAD_URL_MSODBC}'…" \
-    && curl --fail -O "${MICROSOFT_DOWNLOAD_URL_MSODBC}" \
-    \
-    && echo "Download '${MICROSOFT_DOWNLOAD_URL_TOOLS}'…" \
-    && curl --fail -O "${MICROSOFT_DOWNLOAD_URL_TOOLS}" \
-    \
-    && echo "Download '${MICROSOFT_DOWNLOAD_URL_MSODBC_SIG}'…" \
-    && curl --fail -O "${MICROSOFT_DOWNLOAD_URL_MSODBC_SIG}" \
-    \
-    && echo "Download '${MICROSOFT_DOWNLOAD_URL_TOOLS_SIG}'…" \
-    && curl --fail -O "${MICROSOFT_DOWNLOAD_URL_TOOLS_SIG}" \
-    \
-    && echo "Import signature…" \
-    && curl --fail "https://packages.microsoft.com/keys/microsoft.asc" | gpg --import - \
-    && gpg --verify "${MSODBCSQL_PACKAGE}.sig" "${MSODBCSQL_PACKAGE}.apk" \
-    && gpg --verify "${MSSQL_TOOLS_PACKAGE}.sig" "${MSSQL_TOOLS_PACKAGE}.apk" \
-    && apk add --allow-untrusted "${MSODBCSQL_PACKAGE}.apk" \
-    && apk add --allow-untrusted "${MSSQL_TOOLS_PACKAGE}.apk" \
-    \
-    && apk del .install-deps \
-    && rm -f "${MSODBCSQL_PACKAGE}.apk" "${MSSQL_TOOLS_PACKAGE}.apk" \
-    && rm -rf /var/cache/apk/*
+RUN <<'SCRIPT'
+set -eux
 
-## should be set after locale was generated, overwise triggers warnings
-ENV LANG="en_US.UTF-8" LANGUAGE="en_US.UTF-8" LC_ALL="en_US.UTF-8"
+apk add --no-cache dos2unix
+apk add --no-cache --virtual .install-deps \
+    curl \
+    gnupg
+
+msodbc_file="${MICROSOFT_DOWNLOAD_URL_MSODBC##*/}"
+tools_file="${MICROSOFT_DOWNLOAD_URL_TOOLS##*/}"
+
+msodbc_base="${msodbc_file%.apk}"
+tools_base="${tools_file%.apk}"
+
+msodbc_name="${msodbc_base%%_*}"
+tools_name="${tools_base%%_*}"
+
+msodbc_version="${msodbc_base#*_}"
+msodbc_version="${msodbc_version%_*}"
+
+tools_version="${tools_base#*_}"
+tools_version="${tools_version%_*}"
+
+msodbc_suffix="${msodbc_name#msodbcsql}"
+tools_suffix="${tools_name#mssql-tools}"
+
+msodbc_arch="${msodbc_base##*_}"
+tools_arch="${tools_base##*_}"
+
+case "$TARGETARCH" in
+    amd64) expected_arch=amd64 ;;
+    arm64) expected_arch=arm64 ;;
+    *)
+        echo "Unsupported TARGETARCH: $TARGETARCH" >&2
+        exit 1
+        ;;
+esac
+
+[ "$msodbc_arch" = "$expected_arch" ]
+[ "$tools_arch" = "$expected_arch" ]
+
+msodbc_package="${msodbc_base%_*}_${TARGETARCH}"
+tools_package="${tools_base%_*}_${TARGETARCH}"
+
+cat <<CURLCONF | curl --fail --location --config -
+url = "$MICROSOFT_DOWNLOAD_URL_MSODBC"
+output = "$msodbc_package.apk"
+
+url = "${MICROSOFT_DOWNLOAD_URL_MSODBC%.apk}.sig"
+output = "$msodbc_package.sig"
+
+url = "$MICROSOFT_DOWNLOAD_URL_TOOLS"
+output = "$tools_package.apk"
+
+url = "${MICROSOFT_DOWNLOAD_URL_TOOLS%.apk}.sig"
+output = "$tools_package.sig"
+CURLCONF
+
+curl --fail https://packages.microsoft.com/keys/microsoft.asc | gpg --import -
+
+gpg --verify "$msodbc_package.sig" "$msodbc_package.apk"
+gpg --verify "$tools_package.sig" "$tools_package.apk"
+
+apk add --allow-untrusted \
+    "$msodbc_package.apk" \
+    "$tools_package.apk"
+
+ln -sf "/opt/mssql-tools${tools_suffix}/bin/sqlcmd" /usr/local/bin/sqlcmd
+
+apk del .install-deps
+
+rm -f \
+    "$msodbc_package.apk" \
+    "$msodbc_package.sig" \
+    "$tools_package.apk" \
+    "$tools_package.sig"
+
+rm -rf /var/cache/apk/*
+SCRIPT
+
+ENV LANG="en_US.UTF-8" \
+    LANGUAGE="en_US.UTF-8" \
+    LC_ALL="en_US.UTF-8"
 
 ENTRYPOINT ["sqlcmd"]

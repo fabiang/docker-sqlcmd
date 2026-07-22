@@ -22,58 +22,38 @@ jobs:
             sqlcmd: "17.10.1.1-1"
             sqlcmd_minor: "17.10"
             sqlcmd_major: ""
-            msodbcsql_version: "17.11.1.1-1"
-            msodbcsql_suffix: 17
             download_url_msodbc: "https://download.microsoft.com/download/607ebe2c-e17c-4c34-b367-10a75b83bef9/msodbcsql17_17.11.1.1-1_amd64.apk"
             download_url_mssql: "https://download.microsoft.com/download/e/4/e/e4e67866-dffd-428c-aac7-8d28ddafb39b/mssql-tools_17.10.1.1-1_amd64.apk"
             latest: false
-            package_suffix: ""
-            package_path: "/opt/mssql-tools"
           - alpine: 3.24
             sqlcmd: "17.11.1.1-1"
             sqlcmd_minor: "17.11"
             sqlcmd_major: "17"
-            msodbcsql_version: "17.11.1.1-1"
-            msodbcsql_suffix: 17
             download_url_msodbc: "https://download.microsoft.com/download/607ebe2c-e17c-4c34-b367-10a75b83bef9/msodbcsql17_17.11.1.1-1_amd64.apk"
             download_url_mssql: "https://download.microsoft.com/download/aca0282f-6a67-49c0-ae08-887d59d16d1a/mssql-tools_17.11.1.1-1_amd64.apk"
             latest: false
-            package_suffix: ""
-            package_path: "/opt/mssql-tools"
           # Version 18
           - alpine: 3.24
             sqlcmd: "18.2.1.1-1"
             sqlcmd_minor: "18.2"
             sqlcmd_major: ""
-            msodbcsql_version: "18.2.1.1-1"
-            msodbcsql_suffix: 18
             download_url_msodbc: "https://download.microsoft.com/download/1/f/f/1fffb537-26ab-4947-a46a-7a45c27f6f77/msodbcsql18_18.2.1.1-1_amd64.apk"
             download_url_mssql: "https://download.microsoft.com/download/1/f/f/1fffb537-26ab-4947-a46a-7a45c27f6f77/mssql-tools18_18.2.1.1-1_amd64.apk"
             latest: false
-            package_suffix: "18"
-            package_path: "/opt/mssql-tools18"
           - alpine: 3.24
             sqlcmd: "18.4.1.1-1"
             sqlcmd_minor: "18.4"
             sqlcmd_major: ""
-            msodbcsql_version: "18.4.1.1-1"
-            msodbcsql_suffix: 18
             download_url_msodbc: "https://download.microsoft.com/download/7/6/d/76de322a-d860-4894-9945-f0cc5d6a45f8/msodbcsql18_18.4.1.1-1_amd64.apk"
             download_url_mssql: "https://download.microsoft.com/download/7/6/d/76de322a-d860-4894-9945-f0cc5d6a45f8/mssql-tools18_18.4.1.1-1_amd64.apk"
             latest: false
-            package_suffix: "18"
-            package_path: "/opt/mssql-tools18"
           - alpine: 3.24
             sqlcmd: "18.6.2.1-1"
             sqlcmd_minor: "18.6"
             sqlcmd_major: "18"
-            msodbcsql_version: "18.6.2.1-1"
-            msodbcsql_suffix: 18
             download_url_msodbc: "https://download.microsoft.com/download/0b3d5518-b4a7-4a2b-afc7-7ee9e967f93c/msodbcsql18_18.6.2.1-1_amd64.apk"
             download_url_mssql: "https://download.microsoft.com/download/cad0d30f-b9b1-4765-a011-81d8a66c8b8d/mssql-tools18_18.6.2.1-1_amd64.apk"
             latest: true  # newest possible version available -> tag as latest alpine-latest
-            package_suffix: "18"
-            package_path: "/opt/mssql-tools18"
 
     env:
       IMAGE_NAME_FULL: "fabiang/sqlcmd:${{ matrix.version.sqlcmd }}"
@@ -92,7 +72,7 @@ jobs:
     name: "Sqlcmd v${{ matrix.version.sqlcmd }} (Alpine ${{ matrix.version.alpine }})"
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: SQLServer Checksum
         id: sqlserver-checksum
@@ -102,7 +82,7 @@ jobs:
 
       - name: Cache Docker Image
         id: docker-image-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: '*.tar'
           key: docker-image-cache-${{ runner.os }}-${{ steps.sqlserver-checksum.outputs.checksum }}
@@ -131,6 +111,10 @@ jobs:
           interval: 5000
           log: true
 
+      - uses: GuillaumeFalourd/wait-sleep-action@v1
+        with:
+          time: '60' # for 60 seconds
+
       - name: Save SQLServer image
         if: steps.docker-image-cache.outputs.cache-hit != 'true'
         run: docker image save -o sqlserver.tar mcr.microsoft.com/mssql/server:2025-latest
@@ -141,14 +125,6 @@ jobs:
             -t '${{ env.IMAGE_NAME_FULL }}' \
             -t '${{ env.IMAGE_NAME_ALPINE_FULL }}' \
             '--build-arg=ALPINE_VERSION=${{ matrix.version.alpine }}' \
-            \
-            '--build-arg=MSSQLTOOLS_VERSION=${{ matrix.version.sqlcmd }}' \
-            '--build-arg=MSSQLTOOLS_SUFFIX=${{ matrix.version.package_suffix }}' \
-            '--build-arg=MSSQLTOOLS_PATH=${{ matrix.version.package_path }}' \
-            \
-            '--build-arg=MSODBCSQL_VERSION=${{ matrix.version.msodbcsql_version }}' \
-            '--build-arg=MSODBCSQL_SUFFIX=${{ matrix.version.msodbcsql_suffix }}' \
-            \
             '--build-arg=MICROSOFT_DOWNLOAD_URL_MSODBC=${{ matrix.version.download_url_msodbc }}' \
             '--build-arg=MICROSOFT_DOWNLOAD_URL_TOOLS=${{ matrix.version.download_url_mssql }}' \
             .
