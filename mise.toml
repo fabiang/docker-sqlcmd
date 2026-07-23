@@ -13,9 +13,6 @@ docker build \
   '--build-arg=MSSQLTOOLS_SUFFIX=' \
   '--build-arg=MSSQLTOOLS_PATH=/opt/mssql-tools' \
   \
-  '--build-arg=MSODBCSQL_VERSION=17.11.1.1-1' \
-  '--build-arg=MSODBCSQL_SUFFIX=17' \
-  \
   '--build-arg=MICROSOFT_DOWNLOAD_URL_MSODBC=https://download.microsoft.com/download/607ebe2c-e17c-4c34-b367-10a75b83bef9/msodbcsql17_17.11.1.1-1_amd64.apk' \
   '--build-arg=MICROSOFT_DOWNLOAD_URL_TOOLS=https://download.microsoft.com/download/e/4/e/e4e67866-dffd-428c-aac7-8d28ddafb39b/mssql-tools_17.10.1.1-1_amd64.apk' \
   .
@@ -32,9 +29,6 @@ docker build \
   '--build-arg=MSSQLTOOLS_VERSION=17.11.1.1-1' \
   '--build-arg=MSSQLTOOLS_SUFFIX=' \
   '--build-arg=MSSQLTOOLS_PATH=/opt/mssql-tools' \
-  \
-  '--build-arg=MSODBCSQL_VERSION=17.11.1.1-1' \
-  '--build-arg=MSODBCSQL_SUFFIX=17' \
   \
   '--build-arg=MICROSOFT_DOWNLOAD_URL_MSODBC=https://download.microsoft.com/download/607ebe2c-e17c-4c34-b367-10a75b83bef9/msodbcsql17_17.11.1.1-1_amd64.apk' \
   '--build-arg=MICROSOFT_DOWNLOAD_URL_TOOLS=https://download.microsoft.com/download/aca0282f-6a67-49c0-ae08-887d59d16d1a/mssql-tools_17.11.1.1-1_amd64.apk' \
@@ -53,9 +47,6 @@ docker build \
   '--build-arg=MSSQLTOOLS_SUFFIX=18' \
   '--build-arg=MSSQLTOOLS_PATH=/opt/mssql-tools18' \
   \
-  '--build-arg=MSODBCSQL_VERSION=18.2.1.1-1' \
-  '--build-arg=MSODBCSQL_SUFFIX=18' \
-  \
   '--build-arg=MICROSOFT_DOWNLOAD_URL_MSODBC=https://download.microsoft.com/download/1/f/f/1fffb537-26ab-4947-a46a-7a45c27f6f77/msodbcsql18_18.2.1.1-1_amd64.apk' \
   '--build-arg=MICROSOFT_DOWNLOAD_URL_TOOLS=https://download.microsoft.com/download/1/f/f/1fffb537-26ab-4947-a46a-7a45c27f6f77/mssql-tools18_18.2.1.1-1_amd64.apk' \
   .
@@ -73,9 +64,6 @@ docker build \
   '--build-arg=MSSQLTOOLS_SUFFIX=18' \
   '--build-arg=MSSQLTOOLS_PATH=/opt/mssql-tools18' \
   \
-  '--build-arg=MSODBCSQL_VERSION=18.4.1.1-1' \
-  '--build-arg=MSODBCSQL_SUFFIX=18' \
-  \
   '--build-arg=MICROSOFT_DOWNLOAD_URL_MSODBC=https://download.microsoft.com/download/7/6/d/76de322a-d860-4894-9945-f0cc5d6a45f8/msodbcsql18_18.4.1.1-1_amd64.apk' \
   '--build-arg=MICROSOFT_DOWNLOAD_URL_TOOLS=https://download.microsoft.com/download/7/6/d/76de322a-d860-4894-9945-f0cc5d6a45f8/mssql-tools18_18.4.1.1-1_amd64.apk' \
   .
@@ -92,9 +80,6 @@ docker build \
   '--build-arg=MSSQLTOOLS_VERSION=18.6.2.1-1' \
   '--build-arg=MSSQLTOOLS_SUFFIX=18' \
   '--build-arg=MSSQLTOOLS_PATH=/opt/mssql-tools18' \
-  \
-  '--build-arg=MSODBCSQL_VERSION=18.6.2.1-1' \
-  '--build-arg=MSODBCSQL_SUFFIX=18' \
   \
   '--build-arg=MICROSOFT_DOWNLOAD_URL_MSODBC=https://download.microsoft.com/download/0b3d5518-b4a7-4a2b-afc7-7ee9e967f93c/msodbcsql18_18.6.2.1-1_amd64.apk' \
   '--build-arg=MICROSOFT_DOWNLOAD_URL_TOOLS=https://download.microsoft.com/download/cad0d30f-b9b1-4765-a011-81d8a66c8b8d/mssql-tools18_18.6.2.1-1_amd64.apk' \
